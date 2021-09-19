@@ -1,0 +1,84 @@
+package com.example.wishlist
+
+import android.app.Dialog
+import android.content.DialogInterface
+import android.content.Intent
+import androidx.appcompat.app.AppCompatActivity
+import android.os.Bundle
+import android.view.View
+import android.widget.AdapterView
+import android.widget.ArrayAdapter
+import android.widget.ListView
+import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.app.AlertDialog
+import androidx.constraintlayout.motion.widget.OnSwipe
+import androidx.recyclerview.widget.ItemTouchHelper
+import androidx.recyclerview.widget.RecyclerView
+import com.google.android.material.floatingactionbutton.FloatingActionButton
+
+class MainActivity : AppCompatActivity() {
+    private lateinit var rvItems: RecyclerView
+    private lateinit var fabAdd: FloatingActionButton
+    private lateinit var lista: MutableList<Desejo>
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_main)
+
+        this.lista = mutableListOf()
+
+        this.rvItems = findViewById(R.id.rvItems)
+        this.fabAdd = findViewById(R.id.fabAdd)
+
+        this.rvItems.adapter = DesejoAdapter(this.lista)
+        (this.rvItems.adapter as DesejoAdapter).listener = OnItemClickListener()
+
+        ItemTouchHelper(OnSwipe()).attachToRecyclerView(this.rvItems)
+
+        this.fabAdd.setOnClickListener {
+            this.novosItems()
+            (this.rvItems.adapter as DesejoAdapter).notifyDataSetChanged()
+        }
+
+        this.fabAdd.setOnLongClickListener {
+            this.limpar()
+            (this.rvItems.adapter as DesejoAdapter).notifyDataSetChanged()
+            return@setOnLongClickListener true
+        }
+    }
+
+        fun novosItems(){
+            for(i in 1..10){
+                this.lista.add(Desejo("Desejo $i", i))
+            }
+        }
+
+        fun limpar(){
+            this.lista.clear()
+        }
+
+        inner class OnItemClickListener: OnItemClickRecycleView{
+            override fun onItemClick(position: Int) {
+                val desejo = this@MainActivity.lista.get(position)
+                Toast.makeText(this@MainActivity, desejo.descricao, Toast.LENGTH_SHORT).show()
+            }
+        }
+
+    inner class OnSwipe: ItemTouchHelper.SimpleCallback(
+        ItemTouchHelper.UP or ItemTouchHelper.DOWN,
+        ItemTouchHelper.START or ItemTouchHelper.END){
+        override fun onMove(
+            recyclerView: RecyclerView,
+            viewHolder: RecyclerView.ViewHolder,
+            target: RecyclerView.ViewHolder
+        ): Boolean {
+            (this@MainActivity.rvItems.adapter as DesejoAdapter).swap(viewHolder.adapterPosition, target.adapterPosition)
+            return true
+        }
+
+        override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {
+            (this@MainActivity.rvItems.adapter as DesejoAdapter).del(viewHolder.adapterPosition)
+        }
+    }
+}
